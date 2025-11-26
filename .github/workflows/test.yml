@@ -11,8 +11,28 @@ on:
 permissions:
   contents: write
 jobs:
-  test-and-deploy:
-    name: Run tests, build and deploy
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest # Используем последнюю версию Ubuntu для выполнения задания
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Скачиваем ваш код из репозитория на runner
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Используем Node.js версии 20 (или выше, как указано в Лабе 1)
+          cache: 'npm'       # Кэшируем зависимости npm для ускорения установки
+
+      - name: Install dependencies
+        run: npm install # Устанавливаем все зависимости проекта
+
+      - name: Run Vitest tests
+        run: npm run test # Запускаем ваши тесты Vitest
+        # Если тесты не проходят, этот шаг завершится ошибкой, и весь workflow будет считаться проваленным.
+  deploy:
+    name: build and deploy
     runs-on: ubuntu-latest
 
     steps:
