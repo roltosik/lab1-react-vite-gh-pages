@@ -8,6 +8,8 @@ on:
     branches:
       - main        # Запуск при PR в main
 
+permissions:
+  contents: write
 jobs:
   test-and-deploy:
     name: Run tests, build and deploy
