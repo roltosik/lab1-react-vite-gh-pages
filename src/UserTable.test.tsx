@@ -1,11 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import UserTable from './components/UserTable'
 
-declare global {
-  var fetch: jest.Mock
-}
-
-global.fetch = jest.fn()
+declare const global: any
 
 describe('UserTable', () => {
   beforeEach(() => {
