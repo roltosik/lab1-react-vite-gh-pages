@@ -3,7 +3,6 @@ import UserTable from './components/UserTable'
 
 declare const global: any
 
-
 global.fetch = jest.fn()
 
 describe('UserTable', () => {
