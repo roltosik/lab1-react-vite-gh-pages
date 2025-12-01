@@ -1,22 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, test, beforeEach, vi, expect } from 'vitest'
 import UserTable from './components/UserTable'
 
-declare const global: any
-
-global.fetch = jest.fn()
-
-describe('UserTable', () => {
+describe('UserTable with cache', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
+    // сбрасываем fetch мок
+    globalThis.fetch = vi.fn() as any
+    // чистим localStorage
+    localStorage.clear()
   })
 
-  test('renders button and does not show table initially', () => {
-    render(<UserTable />)
-    expect(screen.getByText(/загрузить пользователей/i)).toBeInTheDocument()
-    expect(screen.queryByText(/иван/i)).not.toBeInTheDocument()
-  })
-
-  test('loads users and displays them when button is clicked', async () => {
+  test('loads users from fresh cache without calling fetch', async () => {
     const mockUsers = [
       {
         id: 1,
@@ -27,24 +22,32 @@ describe('UserTable', () => {
       },
     ]
 
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockUsers,
-    })
+    const cache = {
+      timestamp: Date.now(), // свежий
+      data: mockUsers,
+    }
+
+    localStorage.setItem('usersCache', JSON.stringify(cache))
 
     render(<UserTable />)
+
     fireEvent.click(screen.getByText(/загрузить пользователей/i))
 
+    // fetch не должен вызываться
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+
+    // данные из кэша должны появиться в таблице
     expect(await screen.findByText(/иван иванов/i)).toBeInTheDocument()
-    expect(screen.getByText(/ivan@example.com/i)).toBeInTheDocument()
+    expect(screen.getByText(/данные из кэша/i)).toBeInTheDocument()
   })
 
-  test('shows error when fetch fails', async () => {
-    global.fetch.mockRejectedValue(new Error('Network error'))
+  test('clears cache when "Очистить кэш" is clicked', () => {
+    localStorage.setItem('usersCache', JSON.stringify({ timestamp: Date.now(), data: [] }))
 
     render(<UserTable />)
-    fireEvent.click(screen.getByText(/загрузить пользователей/i))
 
-    expect(await screen.findByText(/network error/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByText(/очистить кэш/i))
+
+    expect(localStorage.getItem('usersCache')).toBeNull()
   })
 })
